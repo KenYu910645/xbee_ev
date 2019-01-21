@@ -130,7 +130,7 @@ class BLUE_COM(object): # PING PONG TODO
         # self.server_sock.bind(("",self.port))
         self.server_sock.bind((self.host, self.port))
         # self.server_sock.listen(1)
-        self.server_sock.listen()
+        self.server_sock.listen(1)
 
         self.is_engine_running = True 
         self.engine_thread = threading.Thread(target = self.server_engine)
