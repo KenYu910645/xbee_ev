@@ -127,7 +127,7 @@ class BLUE_COM(object): # PING PONG TODO
         self.engine_thread.start()
 
     def server_engine_stop(self):
-        self.shutdown_threads()
+        self.shutdown_threads() # TODO CLOSE ????
         self.logger.info("[XBEE] server engine stop ")
     
     def server_engine (self): # ToTally Blocking 
@@ -140,7 +140,6 @@ class BLUE_COM(object): # PING PONG TODO
                     # ------- Check Keep alive for client  -------# 
                     if time.time() - self.keepAlive_count >= KEPPALIVE_MAX : # Give up connection
                         self.close(self.sock)
-                        # self.is_connect = False 
                         self.logger.warning ("[XBEE] Disconnected, because client did't send PING. (PING, PONG)")
                     if recbufList != []:
                         msg = recbufList.pop(0) # FIFO, check what I received 
@@ -199,10 +198,8 @@ class BLUE_COM(object): # PING PONG TODO
             if self.is_connect: 
                 # ------- PING PONG -------# Keep alive 
                 if time.time() - self.keepAlive_count >= KEPPALIVE_MAX : # Give up connection
-                    # self.is_connect = False 
                     self.close(self.sock)
                     self.logger.warning ("[XBEE] Disconnected, because KEEPAVLIE isn't response. (PING, PONG)")
-                # TODO TODO TODO 
                 elif  time.time() - self.ping_count >= KEEPALIVE: # Only for client to send "PING"
                     self.send('PING', 0)
                     self.ping_count = time.time()
@@ -358,7 +355,6 @@ class BLUE_COM(object): # PING PONG TODO
             #---------RECV -----------# 
             try: 
                 rec = self.sock.recv(1024) # Blocking for 1 sec. 
-                
             except Exception as e:
                 if e.args[0] == 'timed out':
                     self.logger.debug("[XBEE] recv Timeout." )
@@ -366,7 +362,6 @@ class BLUE_COM(object): # PING PONG TODO
                     self.logger.error("[XBEE] Error: " + str(e) )
                     self.logger.error("[XBEE] Urge disconnected by recv exception.")
                     self.is_connect = False 
-            
             else:
                 if rec == "":
                     time.sleep(0.1)
