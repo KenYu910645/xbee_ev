@@ -221,7 +221,23 @@ class BLUE_COM(object): # PING PONG TODO
         # Create the client socket
         # self.sock=BluetoothSocket(RFCOMM)
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setblocking(False) # Non-blocking 
         # self.sock.settimeout(10) # Timeout 10 sec  # TODO This will cause the bug 
+         
+        rc = self.sock.connect_ex((self.host, self.port))
+        if rc == 0 :  # Conncetion success
+            output  = True 
+            self.is_connect = True 
+            self.keepAlive_count = time.time()
+            self.ping_count = time.time()
+            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
+
+            self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
+            self.recv_thread.start()
+        else: # Exception 
+            self.logger.error("[XBEE] Not able to Connect, " + str(rc) )
+            output = False 
+        '''
         try: 
             # self.sock.connect((host, port)) # What if can't connected TODO
             self.sock.connect((self.host, self.port))
@@ -244,7 +260,8 @@ class BLUE_COM(object): # PING PONG TODO
 
             self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
             self.recv_thread.start()
-        return rc 
+        '''
+        return output 
 
 
     def client_disconnect(self): # Normally disconnect  # Only from client -> server 
@@ -292,7 +309,7 @@ class BLUE_COM(object): # PING PONG TODO
                 if self.recv_thread.is_alive():
                     self.logger.info ("[XBEE] waiting join recv_threading ")
                     self.recv_thread.join(5)
-                self.logger.info ("[XBEE] close socket")
+                self.logger.info ("[XBEE] close recv_threading")
         except : 
             self.logger.error ("[XBEE] Exception at close recv_thread.")
         try: 
@@ -326,7 +343,7 @@ class BLUE_COM(object): # PING PONG TODO
         Both Server and Client need recv_engine for receiving any message.
         '''
         global recbufList, recAwkDir
-        self.sock.settimeout(1)
+        # self.sock.settimeout(1)
         while self.is_connect:
             #---------RECV -----------# 
             try: 
