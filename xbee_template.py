@@ -97,7 +97,6 @@ class SEND_AGENT(object):
         self.bl_obj.logger.error ("[XBEE] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
 
 
-
 class BLUE_COM(object): # PING PONG TODO 
     def __init__(self, logger, BT_cmd_CB, host=None , port = 3 ):
         # -------- Connection --------# 
@@ -121,7 +120,6 @@ class BLUE_COM(object): # PING PONG TODO
     def server_engine_start(self): # Totolly blocking function 
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
         self.server_sock.bind((self.host, self.port))
-        # self.server_sock.setblocking(False) # Non-blocking 
         self.server_sock.listen(1) # Only accept 1 connection at 1 time
 
         self.is_engine_running = True 
@@ -162,7 +160,7 @@ class BLUE_COM(object): # PING PONG TODO
                     try: 
                         client_sock, client_info = self.server_sock.accept()
                     except socket.error, e:
-                        if e.args[0] == errno.EWOULDBLOCK: 
+                        if e.args[0] == errno.EWOULDBLOCK or e == 'timed out':
                             self.logger.debug('[XBEE] Still waiting for client.')
                         else: 
                             self.logger.error('[XBEE] Error at Server Engine: ' + str(e))
@@ -192,8 +190,8 @@ class BLUE_COM(object): # PING PONG TODO
     
     def client_engine_stop(self):
         self.client_disconnect_qos0() # Block for 3 sec to send DISCONNECT to server . 
-        self.shutdown_threads()
         # self.close(self.sock)
+        self.shutdown_threads()
         self.logger.info("[XBEE] client engine stop ")
 
     def client_engine(self):
@@ -278,14 +276,14 @@ class BLUE_COM(object): # PING PONG TODO
                 if time.time() - t_s  > 3 : # Only wait 3 sec
                     self.logger.warning ("[XBEE] Fail to send DISCONNECT in 3 sec.") 
                     break
-            self.close(self.sock)  # Close youself. 
+            # self.close(self.sock)  # Close youself. 
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
     def client_disconnect_qos0(self): # Normally disconnect  # Only from client -> server 
         if self.is_connect: 
             self.send("DISCONNECT", 0)
-            self.close(self.sock)  # Close youself. 
+            # self.close(self.sock)  # Close youself. 
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     #########################
