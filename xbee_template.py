@@ -121,8 +121,9 @@ class BLUE_COM(object): # PING PONG TODO
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
         self.server_sock.bind((self.host, self.port))
         self.server_sock.setblocking(False) # Non-blocking 
+        print ("111")
         self.server_sock.listen(1) # Only accept 1 connection at 1 time
-        
+        print ("222")
 
         self.is_engine_running = True 
         self.engine_thread = threading.Thread(target = self.server_engine)
