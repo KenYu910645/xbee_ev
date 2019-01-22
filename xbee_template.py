@@ -1,12 +1,4 @@
 #!/usr/bin/env python
-# file: rfcomm-client.py
-# auth: Albert Huang <albert@csail.mit.edu>
-# desc: simple demonstration of a client application that uses RFCOMM sockets
-#       intended for use with rfcomm-server
-#
-# $Id: rfcomm-client.py 424 2006-08-24 03:35:54Z albert $
-
-# from bluetooth import *
 from global_logger import logger 
 import time
 import random # for getMid()
@@ -51,7 +43,7 @@ class SEND_AGENT(object):
                 return 
             try: 
                 self.bl_obj.logger.info("[XBEE] Sending " + self.payload + "(" + self.mid + ")")
-                self.bl_obj.sock.send( '['+self.payload+',mid'+ self.mid+']')
+                self.bl_obj.sock.sendall( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e : 
                 self.bl_obj.logger.error("[XBEE] XBEE Error: " + str(e) )
                 self.bl_obj.logger.error("[XBEE] Urge disconnected by send exception, when sending " + self.payload)
@@ -76,7 +68,7 @@ class SEND_AGENT(object):
             #------ Send message -------#  # TODO 
             try: 
                 self.bl_obj.logger.info("[XBEE] Sending: " + self.payload + "(" + self.mid + ")") # totally non-blocking even if disconnect
-                self.bl_obj.sock.send( '['+self.payload+',mid'+ self.mid+']')
+                self.bl_obj.sock.sendall( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e :
                 self.bl_obj.logger.error("[XBEE] BluetoothError: " + str(e) )
                 self.bl_obj.logger.error("[XBEE] Urge disconnected by send exception, when sending " + self.payload)
@@ -127,9 +119,9 @@ class BLUE_COM(object): # PING PONG TODO
     ##########################
     def server_engine_start(self): # Totolly blocking function 
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
-        # self.server_sock.bind(("",self.port))
         self.server_sock.bind((self.host, self.port))
         self.server_sock.listen(1) # Only accept 1 connection at 1 time
+        self.server_sock.setblocking(False) # Non-blocking 
 
         self.is_engine_running = True 
         self.engine_thread = threading.Thread(target = self.server_engine)
@@ -161,8 +153,8 @@ class BLUE_COM(object): # PING PONG TODO
                         self.logger.debug ("nothing to do ")
                     
                 else: # Need to Reconnect 
-                    self.logger.debug("[XBEE] Waiting for connection on port %d" % self.port)
-                    self.server_sock.settimeout(10)
+                    self.logger.info("[XBEE] Waiting for connection on port %d" % self.port)
+                    # self.server_sock.settimeout(10)
                     try: 
                         # client_sock, client_info = self.server_sock.accept() # Blocking for 10 sec
                         client_sock, client_info = self.server_sock.accept()
