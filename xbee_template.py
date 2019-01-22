@@ -160,7 +160,7 @@ class BLUE_COM(object): # PING PONG TODO
                     try: 
                         client_sock, client_info = self.server_sock.accept()
                     except socket.error, e:
-                        if e.args[0] == errno.EWOULDBLOCK or e == 'timed out':
+                        if e.args[0] == errno.EWOULDBLOCK or e.args[0] == errno.ETIMEDOUT:
                             self.logger.debug('[XBEE] Still waiting for client.')
                         else: 
                             self.logger.error('[XBEE] Error at Server Engine: ' + str(e))
@@ -353,14 +353,11 @@ class BLUE_COM(object): # PING PONG TODO
         Both Server and Client need recv_engine for receiving any message.
         '''
         global recbufList, recAwkDir
-        self.sock.setblocking(True)
         self.sock.settimeout(1)
         while self.is_connect:
             #---------RECV -----------# 
             try: 
                 rec = self.sock.recv(1024) # Blocking for 1 sec. 
-            #except : 
-            #   self.logger.debug("[XBEE] recv Timeout." )
                 
             except Exception as e:
                 if e.args[0] == 'timed out':
@@ -375,7 +372,7 @@ class BLUE_COM(object): # PING PONG TODO
                     time.sleep(0.1)
                     continue
                 
-                self.logger.info("rec: " + rec)
+                self.logger.debug("rec: " + rec)
                 is_valid = False 
                 try:
                     #---------  Check start and end Char -------# 
