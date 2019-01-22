@@ -120,7 +120,7 @@ class BLUE_COM(object): # PING PONG TODO
     def server_engine_start(self): # Totolly blocking function 
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
         self.server_sock.bind((self.host, self.port))
-        self.server_sock.setblocking(False) # Non-blocking 
+        # self.server_sock.setblocking(False) # Non-blocking 
         self.server_sock.listen(1) # Only accept 1 connection at 1 time
 
         self.is_engine_running = True 
@@ -133,7 +133,9 @@ class BLUE_COM(object): # PING PONG TODO
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
+        self.sock.settimeout(5)
         #try:
+
         if True : 
             while self.is_engine_running: # Durable Server
                 if self.is_connect : 
@@ -145,7 +147,7 @@ class BLUE_COM(object): # PING PONG TODO
                         elif msg[1] == 'PING':
                             self.logger.info("[XBEE] Get PING  ")
                         elif msg[1] == 'CMD':
-                            self.logger.info("[XBEE] Get cmd ") 
+                            self.logger.info("[XBEE] Get cmd ")
                         else: 
                             self.logger.error("[XBEE] Unresconized cmd: " + msg[1]) 
                     else:
