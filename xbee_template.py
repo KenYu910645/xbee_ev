@@ -133,7 +133,7 @@ class BLUE_COM(object): # PING PONG TODO
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
-        self.sock.settimeout(5)
+        self.server_sock.settimeout(5)
         #try:
 
         if True : 
