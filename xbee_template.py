@@ -4,7 +4,7 @@ import time
 import random # for getMid()
 import threading
 import logging 
-import socket
+import socket, errno
 
 #----- Parameters -----# 
 WAIT_AWK_MAX_TIME = 3 # sec 
@@ -134,8 +134,8 @@ class BLUE_COM(object): # PING PONG TODO
     def server_engine (self): # ToTally Blocking 
         global recbufList
         #client_sock.settimeout(1)
-        try:
-        # if True : 
+        #try:
+        if True : 
             while self.is_engine_running: # Durable Server
                 if self.is_connect : 
                     #----  Check KeepAlive ------# 
@@ -153,22 +153,14 @@ class BLUE_COM(object): # PING PONG TODO
                         self.logger.debug ("nothing to do ")
                     
                 else: # Need to Reconnect 
-                    self.logger.info("[XBEE] Waiting for connection on port %d" % self.port)
-                    # self.server_sock.settimeout(10)
+                    self.logger.debug("[XBEE] Waiting for connection on port %d" % self.port)
                     try: 
-                        # client_sock, client_info = self.server_sock.accept() # Blocking for 10 sec
-                        print ("123")
                         client_sock, client_info = self.server_sock.accept()
-                        print ("456")
-                    #except Exception as e :
-                        #self.logger.info("[XBEE] -server engine- except: " + str(e) )
-                    
-                    except Exception as e:
-                        if e.args[0] == 'timed out':
-                            self.logger.debug("[XBEE] Timeout." )
-                        else:
-                            self.logger.error("[XBEE] Error: " + str(e) )
-                    
+                    except socket.error, e:
+                        if e.args[0] == errno.EWOULDBLOCK: 
+                            self.logger.debug('[XBEE] Still waiting for client.')
+                        else: 
+                            self.logger.error('[XBEE] Error at Server Engine: ' + str(e))
                     else: 
                         self.sock = client_sock
                         self.logger.info("[XBEE] Accepted connection from "+  str(client_info))
@@ -178,8 +170,8 @@ class BLUE_COM(object): # PING PONG TODO
                         self.recv_thread = threading.Thread(target = self.recv_engine) # , args=(self.sock,))
                         self.recv_thread.start()
                 time.sleep(0.1) 
-        except: 
-        #else: 
+        #except: 
+        else: 
             self.logger.error("[XBEE] Something wrong at server_engine.")
         
         self.logger.info("[XBEE] END of server_engine")
