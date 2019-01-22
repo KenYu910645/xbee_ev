@@ -129,8 +129,7 @@ class BLUE_COM(object): # PING PONG TODO
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
         # self.server_sock.bind(("",self.port))
         self.server_sock.bind((self.host, self.port))
-        # self.server_sock.listen(1)
-        self.server_sock.listen(1)
+        self.server_sock.listen(1) # Only accept 1 connection at 1 time
 
         self.is_engine_running = True 
         self.engine_thread = threading.Thread(target = self.server_engine)
@@ -149,7 +148,7 @@ class BLUE_COM(object): # PING PONG TODO
                 if self.is_connect : 
                     #----  Check KeepAlive ------# 
                     if recbufList != []:
-                        msg = recbufList.pop(0) # FIFO
+                        msg = recbufList.pop(0) # FIFO, check what I received 
                         if   msg[1] == 'DISCONNECT': # Close connection with  client 
                             self.close(self.sock)
                         elif msg[1] == 'PING':
