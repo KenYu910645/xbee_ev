@@ -241,7 +241,7 @@ class BLUE_COM(object): # PING PONG TODO
             # self.sock.connect((host, port)) # What if can't connected TODO
             self.sock.connect((self.host, self.port))
         except:
-            print ("[BLUETOOTH] GG")
+            self.logger.error("[BLUETOOTH] client_connect Not able to Connect")
             '''
             except BluetoothError as e:
                 if e.args[0] == 'timed out':
@@ -347,7 +347,7 @@ class BLUE_COM(object): # PING PONG TODO
             try: 
                 rec = self.sock.recv(1024) # Blocking for 1 sec. 
             except : 
-                print ("[BLUETOOTH] GG")
+                self.logger.debug("[BLUETOOTH] recv Timeout." )
                 '''
                 except BluetoothError as e:
                     if e.args[0] == 'timed out':
