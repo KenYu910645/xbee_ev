@@ -133,7 +133,6 @@ class BLUE_COM(object): # PING PONG TODO
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
-        #client_sock.settimeout(1)
         #try:
         if True : 
             while self.is_engine_running: # Durable Server
@@ -156,7 +155,6 @@ class BLUE_COM(object): # PING PONG TODO
                     self.logger.debug("[XBEE] Waiting for connection on port %d" % self.port)
                     try: 
                         client_sock, client_info = self.server_sock.accept()
-                        time.sleep(1)
                     except socket.error, e:
                         if e.args[0] == errno.EWOULDBLOCK: 
                             self.logger.debug('[XBEE] Still waiting for client.')
@@ -220,7 +218,6 @@ class BLUE_COM(object): # PING PONG TODO
         self.logger.info("[XBEE] connecting to " + host)
         ts = time.time()
         # Create the client socket
-        # self.sock=BluetoothSocket(RFCOMM)
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.sock.setblocking(False) # Non-blocking 
         # self.sock.settimeout(10) # Timeout 10 sec  # TODO This will cause the bug 
@@ -345,7 +342,8 @@ class BLUE_COM(object): # PING PONG TODO
         Both Server and Client need recv_engine for receiving any message.
         '''
         global recbufList, recAwkDir
-        # self.sock.settimeout(1)
+        self.sock.setblocking(True)
+        self.sock.settimeout(1)
         while self.is_connect:
             #---------RECV -----------# 
             try: 
