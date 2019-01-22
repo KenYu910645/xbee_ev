@@ -157,7 +157,9 @@ class BLUE_COM(object): # PING PONG TODO
                     # self.server_sock.settimeout(10)
                     try: 
                         # client_sock, client_info = self.server_sock.accept() # Blocking for 10 sec
+                        print ("123")
                         client_sock, client_info = self.server_sock.accept()
+                        print ("456")
                     #except Exception as e :
                         #self.logger.info("[XBEE] -server engine- except: " + str(e) )
                     
