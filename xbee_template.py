@@ -12,6 +12,7 @@ MAX_RESEND_TIMES = 6 # times
 START_CHAR = '['
 END_CHAR = ']'
 KEEPALIVE = 2 # sec ping,pong every 2 sec , 
+KEPPALIVE_MAX = 4 # How long would you wait for PING,PONG, before abandon socket
 
 # ------ Global Variable ---------# 
 recbufList  = [] # [mid  ,  msg_type , content ]
@@ -135,12 +136,11 @@ class BLUE_COM(object): # PING PONG TODO
         global recbufList
         self.server_sock.settimeout(5)
         #try:
-
         if True : 
             while self.is_engine_running: # Durable Server
                 if self.is_connect : 
                     # ------- Check Keep alive for client  -------# 
-                    if time.time() - self.keepAlive_count >= KEEPALIVE * 1.5 : # Give up connection
+                    if time.time() - self.keepAlive_count >= KEPPALIVE_MAX : # Give up connection
                         self.close(self.sock)
                         # self.is_connect = False 
                         self.logger.warning ("[XBEE] Disconnected, because client did't send PING. (PING, PONG)")
@@ -191,16 +191,16 @@ class BLUE_COM(object): # PING PONG TODO
         self.engine_thread.start()
     
     def client_engine_stop(self):
-        self.client_disconnect() # Block for 3 sec to send DISCONNECT to server . 
+        self.client_disconnect_qos0() # Block for 3 sec to send DISCONNECT to server . 
         self.shutdown_threads()
-        self.close(self.sock)
+        # self.close(self.sock)
         self.logger.info("[XBEE] client engine stop ")
 
     def client_engine(self):
         while self.is_engine_running: 
             if self.is_connect: 
                 # ------- PING PONG -------# Keep alive 
-                if time.time() - self.keepAlive_count >= KEEPALIVE * 1.5 : # Give up connection
+                if time.time() - self.keepAlive_count >= KEPPALIVE_MAX : # Give up connection
                     # self.is_connect = False 
                     self.close(self.sock)
                     self.logger.warning ("[XBEE] Disconnected, because KEEPAVLIE isn't response. (PING, PONG)")
@@ -270,11 +270,11 @@ class BLUE_COM(object): # PING PONG TODO
         '''
         return output 
 
-    def client_disconnect(self): # Normally disconnect  # Only from client -> server 
+    def client_disconnect_qos1(self): # Normally disconnect  # Only from client -> server 
         if self.is_connect: 
             rc = self.send("DISCONNECT", 1)
             t_s = time.time() 
-            while not rc.is_awk:    
+            while not rc.is_awk:
                 if time.time() - t_s  > 3 : # Only wait 3 sec
                     self.logger.warning ("[XBEE] Fail to send DISCONNECT in 3 sec.") 
                     break
@@ -282,6 +282,12 @@ class BLUE_COM(object): # PING PONG TODO
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
+    def client_disconnect_qos0(self): # Normally disconnect  # Only from client -> server 
+        if self.is_connect: 
+            self.send("DISCONNECT", 0)
+            self.close(self.sock)  # Close youself. 
+        else: 
+            self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     #########################
     ###   General Usage   ###
     #########################
