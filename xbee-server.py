@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from bluetooth_template import BLUE_COM
+from xbee_template import BLUE_COM
 from global_logger import logger
 import threading
 import time 
@@ -35,7 +35,6 @@ blue_com = BLUE_COM(logger, BT_cmd_CB, host = '195.0.0.13' , port = 1 )
 ###   Start server engine at background  ###
 ############################################
 blue_com.server_engine_start()
-
 
 ###############
 ###  Loop   ###

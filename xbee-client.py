@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from bluetooth_template import BLUE_COM
+from xbee_template import BLUE_COM
 from global_logger import logger
 import signal 
 import threading 
