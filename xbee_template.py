@@ -357,7 +357,7 @@ class BLUE_COM(object): # PING PONG TODO
                     self.is_connect = False 
             
             else:
-                self.logger.debug("rec: " + rec)
+                self.logger.info("rec: " + rec)
                 is_valid = False 
                 try:
                     #---------  Check start and end Char -------# 
