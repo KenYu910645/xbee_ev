@@ -139,7 +139,11 @@ class BLUE_COM(object): # PING PONG TODO
         if True : 
             while self.is_engine_running: # Durable Server
                 if self.is_connect : 
-                    #----  Check KeepAlive ------# 
+                    # ------- Check Keep alive for client  -------# 
+                    if time.time() - self.keepAlive_count >= KEEPALIVE * 1.5 : # Give up connection
+                        self.close(self.sock)
+                        # self.is_connect = False 
+                        self.logger.warning ("[XBEE] Disconnected, because client did't send PING. (PING, PONG)")
                     if recbufList != []:
                         msg = recbufList.pop(0) # FIFO, check what I received 
                         if   msg[1] == 'DISCONNECT': # Close connection with  client 
@@ -197,7 +201,8 @@ class BLUE_COM(object): # PING PONG TODO
             if self.is_connect: 
                 # ------- PING PONG -------# Keep alive 
                 if time.time() - self.keepAlive_count >= KEEPALIVE * 1.5 : # Give up connection
-                    self.is_connect = False 
+                    # self.is_connect = False 
+                    self.close(self.sock)
                     self.logger.warning ("[XBEE] Disconnected, because KEEPAVLIE isn't response. (PING, PONG)")
                 # TODO TODO TODO 
                 elif  time.time() - self.ping_count >= KEEPALIVE: # Only for client to send "PING"
