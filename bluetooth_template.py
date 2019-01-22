@@ -47,20 +47,20 @@ class SEND_AGENT(object):
         '''
         for i in range(MAX_RESEND_TIMES):
             if not self.bl_obj.is_connect:
-                self.bl_obj.logger.info("[BLUETOOTH] Lost connection, Give up sending " + self.payload)
+                self.bl_obj.logger.info("[XBEE] Lost connection, Give up sending " + self.payload)
                 return 
             try: 
-                self.bl_obj.logger.info("[BLUETOOTH] Sending " + self.payload + "(" + self.mid + ")")
+                self.bl_obj.logger.info("[XBEE] Sending " + self.payload + "(" + self.mid + ")")
                 self.bl_obj.sock.send( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e : 
-                self.bl_obj.logger.error("[BLUETOOTH] BluetoothError: " + str(e) )
-                self.bl_obj.logger.error("[BLUETOOTH] Urge disconnected by send exception, when sending " + self.payload)
+                self.bl_obj.logger.error("[XBEE] XBEE Error: " + str(e) )
+                self.bl_obj.logger.error("[XBEE] Urge disconnected by send exception, when sending " + self.payload)
                 self.bl_obj.is_connect = False 
                 return 
             else: 
                 self.is_awk = True 
                 return 
-        self.bl_obj.logger.error ("[BLUETOOTH] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
+        self.bl_obj.logger.error ("[XBEE] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
 
     def send_target(self):
         '''
@@ -71,25 +71,25 @@ class SEND_AGENT(object):
         global recAwkDir
         for i in range(MAX_RESEND_TIMES):
             if not self.bl_obj.is_connect:
-                self.bl_obj.logger.info("[BLUETOOTH] Lost connection, Give up sending " + self.payload)
+                self.bl_obj.logger.info("[XBEE] Lost connection, Give up sending " + self.payload)
                 return 
             #------ Send message -------#  # TODO 
             try: 
-                self.bl_obj.logger.info("[BLUETOOTH] Sending: " + self.payload + "(" + self.mid + ")") # totally non-blocking even if disconnect
+                self.bl_obj.logger.info("[XBEE] Sending: " + self.payload + "(" + self.mid + ")") # totally non-blocking even if disconnect
                 self.bl_obj.sock.send( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e :
-                self.bl_obj.logger.error("[BLUETOOTH] BluetoothError: " + str(e) )
-                self.bl_obj.logger.error("[BLUETOOTH] Urge disconnected by send exception, when sending " + self.payload)
+                self.bl_obj.logger.error("[XBEE] BluetoothError: " + str(e) )
+                self.bl_obj.logger.error("[XBEE] Urge disconnected by send exception, when sending " + self.payload)
                 self.bl_obj.is_connect = False 
                 return 
-                # self.logger.error ("[BLUETOOTH] send_target() : "+ str(e) + ". Retry " + str(i) + "/" + str(MAX_RESEND_TIMES) ) 
+                # self.logger.error ("[XBEE] send_target() : "+ str(e) + ". Retry " + str(i) + "/" + str(MAX_RESEND_TIMES) ) 
                 # time.sleep (1)
             else: 
                 t_start = time.time() 
                 while time.time() - t_start < WAIT_AWK_MAX_TIME: 
                     ans = recAwkDir.pop(self.mid, "not match") # Pop out element, if exitence 
                     if ans != "not match": # Get AWK 
-                        self.bl_obj.logger.info("[BLUETOOTH] Get AWK (" + self.mid + ")")
+                        self.bl_obj.logger.info("[XBEE] Get AWK (" + self.mid + ")")
                         self.is_awk = True 
                         break
                     else: # Keep waiting 
@@ -99,9 +99,9 @@ class SEND_AGENT(object):
                 if self.is_awk : 
                     return 
                 else: 
-                    self.bl_obj.logger.warning("[BLUETOOTH] Need to resend "+ self.payload +" (" + str(i) + "/" + str(MAX_RESEND_TIMES) + ", "+ self.mid +")")
+                    self.bl_obj.logger.warning("[XBEE] Need to resend "+ self.payload +" (" + str(i) + "/" + str(MAX_RESEND_TIMES) + ", "+ self.mid +")")
                     time.sleep(1) # for rest 
-        self.bl_obj.logger.error ("[BLUETOOTH] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
+        self.bl_obj.logger.error ("[XBEE] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
 
 
 
@@ -138,7 +138,7 @@ class BLUE_COM(object): # PING PONG TODO
 
     def server_engine_stop(self):
         self.shutdown_threads()
-        self.logger.info("[BLUETOOTH] server engine stop ")
+        self.logger.info("[XBEE] server engine stop ")
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
@@ -153,32 +153,32 @@ class BLUE_COM(object): # PING PONG TODO
                         if   msg[1] == 'DISCONNECT': # Close connection with  client 
                             self.close(self.sock)
                         elif msg[1] == 'PING':
-                            self.logger.info("[BLUETOOTH] Get PING  ")
+                            self.logger.info("[XBEE] Get PING  ")
                         elif msg[1] == 'CMD':
-                            self.logger.info("[BLUETOOTH] Get cmd ") 
+                            self.logger.info("[XBEE] Get cmd ") 
                         else: 
-                            self.logger.error("[BLUETOOTH] Unresconized cmd: " + msg[1]) 
+                            self.logger.error("[XBEE] Unresconized cmd: " + msg[1]) 
                     else:
                         self.logger.debug ("nothing to do ")
                     
                 else: # Need to Reconnect 
-                    self.logger.debug("[BLUETOOTH] Waiting for connection on RFCOMM channel %d" % self.port)
+                    self.logger.debug("[XBEE] Waiting for connection on port %d" % self.port)
                     self.server_sock.settimeout(10)
                     try: 
                         # client_sock, client_info = self.server_sock.accept() # Blocking for 10 sec
                         client_sock, client_info = self.server_sock.accept()
-                    except: 
-                        self.logger.debug("[BLUETOOTH] Something Wrong.")
-                        '''
-                        except BluetoothError as e:
-                            if e.args[0] == 'timed out':
-                                self.logger.debug("[BLUETOOTH] Timeout." )
-                            else:
-                                self.logger.error("[BLUETOOTH] BluetoothError: " + str(e) )
-                        '''
+                    #except Exception as e :
+                        #self.logger.info("[XBEE] -server engine- except: " + str(e) )
+                    
+                    except Exception as e:
+                        if e.args[0] == 'timed out':
+                            self.logger.debug("[XBEE] Timeout." )
+                        else:
+                            self.logger.error("[XBEE] Error: " + str(e) )
+                    
                     else: 
                         self.sock = client_sock
-                        self.logger.info("[BLUETOOTH] Accepted connection from "+  str(client_info))
+                        self.logger.info("[XBEE] Accepted connection from "+  str(client_info))
                         self.is_connect = True 
                         self.keepAlive_count = time.time() 
                         
@@ -187,9 +187,9 @@ class BLUE_COM(object): # PING PONG TODO
                 time.sleep(0.1) 
         except: 
         #else: 
-            self.logger.error("[BLUETOOTH] Something wrong at server_engine.")
+            self.logger.error("[XBEE] Something wrong at server_engine.")
         
-        self.logger.info("[BLUETOOTH] END of server_engine")
+        self.logger.info("[XBEE] END of server_engine")
     
 
     ###########################
@@ -204,7 +204,7 @@ class BLUE_COM(object): # PING PONG TODO
         self.client_disconnect() # Block for 3 sec to send DISCONNECT to server . 
         self.shutdown_threads()
         self.close(self.sock)
-        self.logger.info("[BLUETOOTH] client engine stop ")
+        self.logger.info("[XBEE] client engine stop ")
 
     def client_engine(self):
         while self.is_engine_running: 
@@ -212,7 +212,7 @@ class BLUE_COM(object): # PING PONG TODO
                 # ------- PING PONG -------# Keep alive 
                 if time.time() - self.keepAlive_count >= KEEPALIVE * 1.5 : # Give up connection
                     self.is_connect = False 
-                    self.logger.warning ("[BLUETOOTH] Disconnected, because KEEPAVLIE isn't response. (PING, PONG)")
+                    self.logger.warning ("[XBEE] Disconnected, because KEEPAVLIE isn't response. (PING, PONG)")
                 # TODO TODO TODO 
                 elif  time.time() - self.ping_count >= KEEPALIVE: # Only for client to send "PING"
                     self.send('PING', 0)
@@ -231,7 +231,7 @@ class BLUE_COM(object): # PING PONG TODO
         '''
         Only for client socket 
         '''
-        self.logger.info("[BLUETOOTH] connecting to " + host)
+        self.logger.info("[XBEE] connecting to " + host)
         ts = time.time()
         # Create the client socket
         # self.sock=BluetoothSocket(RFCOMM)
@@ -240,22 +240,22 @@ class BLUE_COM(object): # PING PONG TODO
         try: 
             # self.sock.connect((host, port)) # What if can't connected TODO
             self.sock.connect((self.host, self.port))
-        except:
-            self.logger.error("[BLUETOOTH] client_connect Not able to Connect")
-            '''
-            except BluetoothError as e:
-                if e.args[0] == 'timed out':
-                    self.logger.error("[BLUETOOTH] Connection Timeout 10 sec ." )
-                else:
-                    self.logger.error("[BLUETOOTH] Not able to Connect, BluetoothError: " + str(e) )
-                rc = False 
-            '''
+        #except Exception as e :
+            #self.logger.info("[XBEE] -client_connect- except: " + str(e) )
+            #rc = False 
+        except Exception as e:
+            if e.args[0] == 'timed out':
+                self.logger.error("[XBEE] Connection Timeout 10 sec ." )
+            else:
+                self.logger.error("[XBEE] Not able to Connect, " + str(e) )
+            rc = False 
+            
         else : 
             rc = True 
             self.is_connect = True 
             self.keepAlive_count = time.time()
             self.ping_count = time.time()
-            self.logger.info("[BLUETOOTH] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
+            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
 
             self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
             self.recv_thread.start()
@@ -268,11 +268,11 @@ class BLUE_COM(object): # PING PONG TODO
             t_s = time.time() 
             while not rc.is_awk:    
                 if time.time() - t_s  > 3 : # Only wait 3 sec
-                    self.logger.warning ("[BLUETOOTH] Fail to send DISCONNECT in 3 sec.") 
+                    self.logger.warning ("[XBEE] Fail to send DISCONNECT in 3 sec.") 
                     break
             self.close(self.sock)  # Close youself. 
         else: 
-            self.logger.warning ("[BLUETOOTH] No need for disconnect, Connection already lost.")
+            self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
     #########################
     ###   General Usage   ###
@@ -282,40 +282,40 @@ class BLUE_COM(object): # PING PONG TODO
         self.is_engine_running = False
         try:
             if self.engine_thread == None : 
-                self.logger.info("[BLUETOOTH] engine_thread didn't start yet ....")
+                self.logger.info("[XBEE] engine_thread didn't start yet ....")
             else: 
-                self.logger.info("[BLUETOOTH] Waiting engine_thread to join...")
+                self.logger.info("[XBEE] Waiting engine_thread to join...")
                 self.engine_thread.join(10)
         except : 
-            self.logger.error("[BLUETOOTH] Fail to join engine_thread.")
+            self.logger.error("[XBEE] Fail to join engine_thread.")
         
         try:
             if self.recv_thread == None :
-                self.logger.info("[BLUETOOTH] recv_thread didn't start yet ....")
+                self.logger.info("[XBEE] recv_thread didn't start yet ....")
             else:
-                self.logger.info("[BLUETOOTH] Waiting recv thread to join...")
+                self.logger.info("[XBEE] Waiting recv thread to join...")
                 self.recv_thread.join(10)
         except : 
-            self.logger.error("[BLUETOOTH] Fail to join recv thread.")
+            self.logger.error("[XBEE] Fail to join recv thread.")
     
     def close(self, socket): 
         self.is_connect = False 
         try: # to close recv_threading 
             if self.recv_thread == None : 
-                self.logger.info("[BLUETOOTH] recv_thread didn't start yet ....")
+                self.logger.info("[XBEE] recv_thread didn't start yet ....")
             else: 
                 if self.recv_thread.is_alive():
-                    self.logger.info ("[BLUETOOTH] waiting join recv_threading ")
+                    self.logger.info ("[XBEE] waiting join recv_threading ")
                     self.recv_thread.join(5)
-                self.logger.info ("[BLUETOOTH] close socket")
+                self.logger.info ("[XBEE] close socket")
         except : 
-            self.logger.error ("[BLUETOOTH] Exception at close recv_thread.")
+            self.logger.error ("[XBEE] Exception at close recv_thread.")
         try: 
             socket.close()
-            self.logger.info("[BLUETOOTH] Socket close.")
+            self.logger.info("[XBEE] Socket close.")
             socket = None
         except: 
-            self.logger.error ("[BLUETOOTH] Can't close socket .")
+            self.logger.error ("[XBEE] Can't close socket .")
     
     def getMid(self):
         '''
@@ -346,17 +346,17 @@ class BLUE_COM(object): # PING PONG TODO
             #---------RECV -----------# 
             try: 
                 rec = self.sock.recv(1024) # Blocking for 1 sec. 
-            except : 
-                self.logger.debug("[BLUETOOTH] recv Timeout." )
-                '''
-                except BluetoothError as e:
-                    if e.args[0] == 'timed out':
-                        self.logger.debug("[BLUETOOTH] recv Timeout." )
-                    else:
-                        self.logger.error("[BLUETOOTH] BluetoothError: " + str(e) )
-                        self.logger.error("[BLUETOOTH] Urge disconnected by recv exception.")
-                        self.is_connect = False 
-                '''
+            #except : 
+            #   self.logger.debug("[XBEE] recv Timeout." )
+                
+            except Exception as e:
+                if e.args[0] == 'timed out':
+                    self.logger.debug("[XBEE] recv Timeout." )
+                else:
+                    self.logger.error("[XBEE] Error: " + str(e) )
+                    self.logger.error("[XBEE] Urge disconnected by recv exception.")
+                    self.is_connect = False 
+            
             else:
                 self.logger.debug("rec: " + rec)
                 is_valid = False 
@@ -375,10 +375,10 @@ class BLUE_COM(object): # PING PONG TODO
                         pass 
                 except: 
                     is_valid = False 
-                    self.logger.error ("[BLUETOOTH] recv_engine MID ERROR ")
+                    self.logger.error ("[XBEE] recv_engine MID ERROR ")
 
                 if is_valid: 
-                    self.logger.info ("[BLUETOOTH] Received: " + rec )
+                    self.logger.info ("[XBEE] Received: " + rec )
                     if rec == "AWK":
                         recAwkDir[mid_str[4:]] = rec
                     elif rec == "PING": # Server recv 
@@ -387,7 +387,7 @@ class BLUE_COM(object): # PING PONG TODO
                     elif rec == "PONG":# Client  recv 
                         self.keepAlive_count = time.time()
                     else:
-                        # self.logger.debug("[BLUETOOTH] Sending AWK")
+                        # self.logger.debug("[XBEE] Sending AWK")
                         self.send('AWK', 0, mid = mid_str[4:])
                         
                         if rec == "DISCONNECT":
@@ -396,7 +396,7 @@ class BLUE_COM(object): # PING PONG TODO
                             recbufList.append([mid_str[4:], "CMD" , rec ])
                             self.BT_cmd_CB(rec)
                 else: 
-                    self.logger.error("[[BLUETOOTH]] received not valid msg.")
+                    self.logger.error("[XBEE] received not valid msg.")
                 # ------ Reset Flag --------# 
                 rec = ""
                 # End of else 
