@@ -156,6 +156,7 @@ class BLUE_COM(object): # PING PONG TODO
                     self.logger.debug("[XBEE] Waiting for connection on port %d" % self.port)
                     try: 
                         client_sock, client_info = self.server_sock.accept()
+                        time.sleep(1)
                     except socket.error, e:
                         if e.args[0] == errno.EWOULDBLOCK: 
                             self.logger.debug('[XBEE] Still waiting for client.')
@@ -221,22 +222,24 @@ class BLUE_COM(object): # PING PONG TODO
         # Create the client socket
         # self.sock=BluetoothSocket(RFCOMM)
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setblocking(False) # Non-blocking 
+        # self.sock.setblocking(False) # Non-blocking 
         # self.sock.settimeout(10) # Timeout 10 sec  # TODO This will cause the bug 
-         
+    
         rc = self.sock.connect_ex((self.host, self.port))
         if rc == 0 :  # Conncetion success
             output  = True 
             self.is_connect = True 
             self.keepAlive_count = time.time()
             self.ping_count = time.time()
+            self.sock.setblocking(False) # Non-blocking 
             self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
 
             self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
             self.recv_thread.start()
         else: # Exception 
-            self.logger.error("[XBEE] Not able to Connect, " + str(rc) )
+            self.logger.error("[XBEE] Not able to Connect, " + errno.errorcode[rc] )
             output = False 
+        
         '''
         try: 
             # self.sock.connect((host, port)) # What if can't connected TODO
@@ -262,7 +265,6 @@ class BLUE_COM(object): # PING PONG TODO
             self.recv_thread.start()
         '''
         return output 
-
 
     def client_disconnect(self): # Normally disconnect  # Only from client -> server 
         if self.is_connect: 
@@ -360,6 +362,10 @@ class BLUE_COM(object): # PING PONG TODO
                     self.is_connect = False 
             
             else:
+                if rec == "":
+                    time.sleep(0.1)
+                    continue
+                
                 self.logger.info("rec: " + rec)
                 is_valid = False 
                 try:
