@@ -18,13 +18,11 @@ signal.signal(signal.SIGINT, sigint_handler)
 signal.signal(signal.SIGHUP, sigint_handler)
 signal.signal(signal.SIGTERM, sigint_handler)
 
-
 ###########################
 ###  Callback function  ###
 ###########################
 def BT_cmd_CB(msg):
     logger.info("Get msg from main : " + msg) 
-
 
 #########################################
 ###   Config of bluetooth connction   ###
