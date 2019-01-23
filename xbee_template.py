@@ -130,7 +130,8 @@ class BLUE_COM(object):
             try: 
                 self.server_sock.bind((self.host, self.port))
             except Exception as e : 
-                self.logger.warning("[XBEE] Exception at sock bind() : " + str(e))
+                self.logger.warning("[XBEE] Exception at sock bind() : " + str(e) + ", keep try binding ...")
+                time.sleep(0.7)
             else: 
                 break 
         self.server_sock.listen(1) # Only accept 1 connection at a time
