@@ -238,7 +238,7 @@ class BLUE_COM(object):
             self.keepAlive_count = time.time()
             self.ping_count = time.time()
             self.sock.setblocking(False) # Non-blocking 
-            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") 
+            self.logger.info("[XBEE] connected. Spend " + str( round((time.time() - ts) * 1000 )) + "ms.")
 
             self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
             self.recv_thread.start()
@@ -375,7 +375,7 @@ class BLUE_COM(object):
                         self.send('PONG', 0, mid=mid_str[4:]) # Send the same mid with PING 
                     elif rec == "PONG":# Client recv 
                         self.keepAlive_count = time.time()
-                        self.logger.info('[XBEE] Get PONG in ' + str(self.ping_count - self.keepAlive_count))
+                        self.logger.info('[XBEE] Get PONG in ' + str( round((self.keepAlive_count - self.ping_count) * 1000 )) + "ms.")
                     else:
                         # self.logger.debug("[XBEE] Sending AWK")
                         self.send('AWK', 0, mid = mid_str[4:])
