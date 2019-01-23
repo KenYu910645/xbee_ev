@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from xbee_template import BLUE_COM
-from global_logger import logger
+from global_var.global_logger import logger
 import threading
 import time 
 import signal

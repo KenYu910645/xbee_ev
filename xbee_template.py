@@ -1,18 +1,15 @@
 #!/usr/bin/env python
-from global_logger import logger 
+from global_var.global_logger import logger 
 import time
 import random # for getMid()
 import threading
 import logging 
 import socket, errno
+import os 
+from global_var.global_param import  WAIT_AWK_MAX_TIME, MAX_RESEND_TIMES, KEEPALIVE, KEPPALIVE_MAX
 
-#----- Parameters -----# 
-WAIT_AWK_MAX_TIME = 3 # sec 
-MAX_RESEND_TIMES = 6 # times 
 START_CHAR = '['
 END_CHAR = ']'
-KEEPALIVE = 2 # sec ping,pong every 2 sec , 
-KEPPALIVE_MAX = 4 # How long would you wait for PING,PONG, before abandon socket
 
 # ------ Global Variable ---------# 
 recbufList  = [] # [mid  ,  msg_type , content ]
@@ -164,7 +161,7 @@ class BLUE_COM(object):
                     try: 
                         client_sock, client_info = self.server_sock.accept()
                     except socket.error, e:
-                        if e.args[0] == errno.EWOULDBLOCK or e.args[0] == errno.ETIMEDOUT:
+                        if e.args[0] == errno.EWOULDBLOCK or e.args[0] == 'timed out':
                             self.logger.debug('[XBEE] Still waiting for client.')
                         else: 
                             self.logger.error('[XBEE] Error at Server Engine: ' + str(e))
@@ -193,7 +190,7 @@ class BLUE_COM(object):
         self.engine_thread.start()
     
     def client_engine_stop(self):
-        self.client_disconnect_qos0() # Block for 3 sec to send DISCONNECT to server . 
+        self.client_disconnect_qos1() # Block for 3 sec to send DISCONNECT to server . 
         self.shutdown_threads()
         self.logger.info("[XBEE] client engine stop ")
 
@@ -235,12 +232,12 @@ class BLUE_COM(object):
             self.keepAlive_count = time.time()
             self.ping_count = time.time()
             self.sock.setblocking(False) # Non-blocking 
-            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
+            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") 
 
             self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
             self.recv_thread.start()
         else: # Exception 
-            self.logger.error("[XBEE] Not able to Connect, " + errno.errorcode[rc] )
+            self.logger.error("[XBEE] Not able to Connect, " + os.strerror(rc))
             output = False 
         return output 
 
@@ -255,11 +252,6 @@ class BLUE_COM(object):
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
-    def client_disconnect_qos0(self): # Normally disconnect  # Only from client -> server 
-        if self.is_connect: 
-            self.send("DISCONNECT", 0)
-        else: 
-            self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     #########################
     ###   General Usage   ###
     #########################
@@ -270,16 +262,6 @@ class BLUE_COM(object):
         self.is_connect = False
         self.is_engine_running = False
         # -------------------------------# 
-        '''
-        try:
-            if self.recv_thread == None :
-                self.logger.info("[XBEE] recv_thread didn't start yet ....")
-            else:
-                self.logger.info("[XBEE] Waiting recv thread to join...")
-                self.recv_thread.join(10)
-        except : 
-            self.logger.error("[XBEE] Fail to join recv thread.")
-        '''
         self.close(self.sock)
         try:
             if self.engine_thread == None : 
@@ -293,7 +275,7 @@ class BLUE_COM(object):
     
     def close(self, socket): 
         self.is_connect = False  # P2P
-        # -------------------------------_# 
+        # -----------End recv threading --------------_# 
         try: # to close recv_threading 
             if self.recv_thread == None : 
                 self.logger.info("[XBEE] recv_thread didn't start yet ....")
@@ -304,6 +286,8 @@ class BLUE_COM(object):
                 self.logger.info ("[XBEE] close recv_threading")
         except : 
             self.logger.error ("[XBEE] Exception at close recv_thread.")
+        
+        # -----------close socket  --------------_# 
         try: 
             socket.close()
             self.logger.info("[XBEE] Socket close.")
@@ -371,19 +355,24 @@ class BLUE_COM(object):
                     is_valid = False 
                     self.logger.error ("[XBEE] recv_engine MID ERROR ")
 
-                if is_valid: 
-                    self.logger.info ("[XBEE] Received: " + rec )
+                if is_valid:
+                    #------- Print  ----------#  
+                    if rec == 'PING' or rec == 'PONG' :
+                        pass 
+                    else:  
+                        self.logger.info ("[XBEE] Received: " + rec )
+                    #------- What to do when received msg ------# 
                     if rec == "AWK":
                         recAwkDir[mid_str[4:]] = rec
                     elif rec == "PING": # Server recv 
                         self.keepAlive_count = time.time()
                         self.send('PONG', 0, mid=mid_str[4:]) # Send the same mid with PING 
-                    elif rec == "PONG":# Client  recv 
+                    elif rec == "PONG":# Client recv 
                         self.keepAlive_count = time.time()
+                        self.logger.info('[XBEE] Get PONG in ' + str(self.ping_count - self.keepAlive_count))
                     else:
                         # self.logger.debug("[XBEE] Sending AWK")
                         self.send('AWK', 0, mid = mid_str[4:])
-                        
                         if rec == "DISCONNECT":
                             recbufList.append([mid_str[4:], rec , ""])
                         else :  # CMD

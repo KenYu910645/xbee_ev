@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from xbee_template import BLUE_COM
-from global_logger import logger
+from global_var.global_logger import logger
 import signal 
 import threading 
 import time 
@@ -52,8 +52,6 @@ while is_running :
     # Wait 1 sec 
     time.sleep(1)
 input_thread.join(1)
-
-
 
 #####################
 ###   End Engine  ###
