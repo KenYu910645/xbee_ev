@@ -96,8 +96,7 @@ class SEND_AGENT(object):
                     time.sleep(1) # for rest 
         self.bl_obj.logger.error ("[XBEE] Fail to Send After trying " + str(MAX_RESEND_TIMES) + " times. Abort." )
 
-
-class BLUE_COM(object): # PING PONG TODO 
+class BLUE_COM(object): 
     def __init__(self, logger, BT_cmd_CB, host=None , port = 3 ):
         # -------- Connection --------# 
         self.is_connect = False
@@ -127,8 +126,14 @@ class BLUE_COM(object): # PING PONG TODO
         self.engine_thread.start()
 
     def server_engine_stop(self):
-        self.shutdown_threads() # TODO CLOSE ????
-        self.logger.info("[XBEE] server engine stop ")
+        self.shutdown_threads()
+        try: 
+            self.server_sock.close()
+            self.logger.info("[XBEE] Server socket close.")
+            self.server_sock = None
+        except: 
+            self.logger.error ("[XBEE] Can't close server socket.")
+        # self.logger.info("[XBEE] server engine stop ")
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
@@ -189,7 +194,6 @@ class BLUE_COM(object): # PING PONG TODO
     
     def client_engine_stop(self):
         self.client_disconnect_qos0() # Block for 3 sec to send DISCONNECT to server . 
-        # self.close(self.sock)
         self.shutdown_threads()
         self.logger.info("[XBEE] client engine stop ")
 
@@ -238,31 +242,6 @@ class BLUE_COM(object): # PING PONG TODO
         else: # Exception 
             self.logger.error("[XBEE] Not able to Connect, " + errno.errorcode[rc] )
             output = False 
-        
-        '''
-        try: 
-            # self.sock.connect((host, port)) # What if can't connected TODO
-            self.sock.connect((self.host, self.port))
-        #except Exception as e :
-            #self.logger.info("[XBEE] -client_connect- except: " + str(e) )
-            #rc = False 
-        except Exception as e:
-            if e.args[0] == 'timed out':
-                self.logger.error("[XBEE] Connection Timeout 10 sec ." )
-            else:
-                self.logger.error("[XBEE] Not able to Connect, " + str(e) )
-            rc = False 
-            
-        else : 
-            rc = True 
-            self.is_connect = True 
-            self.keepAlive_count = time.time()
-            self.ping_count = time.time()
-            self.logger.info("[XBEE] connected. Spend " + str(time.time() - ts) + " sec.") #Link directly, Faster ????? TODO 
-
-            self.recv_thread = threading.Thread(target = self.recv_engine)# , args=(self.sock,))  # (self.sock))
-            self.recv_thread.start()
-        '''
         return output 
 
     def client_disconnect_qos1(self): # Normally disconnect  # Only from client -> server 
@@ -273,22 +252,35 @@ class BLUE_COM(object): # PING PONG TODO
                 if time.time() - t_s  > 3 : # Only wait 3 sec
                     self.logger.warning ("[XBEE] Fail to send DISCONNECT in 3 sec.") 
                     break
-            # self.close(self.sock)  # Close youself. 
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
     def client_disconnect_qos0(self): # Normally disconnect  # Only from client -> server 
         if self.is_connect: 
             self.send("DISCONNECT", 0)
-            # self.close(self.sock)  # Close youself. 
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     #########################
     ###   General Usage   ###
     #########################
     def shutdown_threads(self):
+        '''
+        Include close socket 
+        '''
         self.is_connect = False
         self.is_engine_running = False
+        # -------------------------------# 
+        '''
+        try:
+            if self.recv_thread == None :
+                self.logger.info("[XBEE] recv_thread didn't start yet ....")
+            else:
+                self.logger.info("[XBEE] Waiting recv thread to join...")
+                self.recv_thread.join(10)
+        except : 
+            self.logger.error("[XBEE] Fail to join recv thread.")
+        '''
+        self.close(self.sock)
         try:
             if self.engine_thread == None : 
                 self.logger.info("[XBEE] engine_thread didn't start yet ....")
@@ -298,17 +290,10 @@ class BLUE_COM(object): # PING PONG TODO
         except : 
             self.logger.error("[XBEE] Fail to join engine_thread.")
         
-        try:
-            if self.recv_thread == None :
-                self.logger.info("[XBEE] recv_thread didn't start yet ....")
-            else:
-                self.logger.info("[XBEE] Waiting recv thread to join...")
-                self.recv_thread.join(10)
-        except : 
-            self.logger.error("[XBEE] Fail to join recv thread.")
     
     def close(self, socket): 
-        self.is_connect = False 
+        self.is_connect = False  # P2P
+        # -------------------------------_# 
         try: # to close recv_threading 
             if self.recv_thread == None : 
                 self.logger.info("[XBEE] recv_thread didn't start yet ....")
