@@ -119,11 +119,21 @@ class BLUE_COM(object):
     ##########################
     ###   For Server Only  ###
     ##########################
-    def server_engine_start(self): # Totolly blocking function 
+    def server_engine_start(self): 
+        '''
+        Blocking if binding error.
+        If client keep trying to connected with server, adress may be block. 
+        '''
         self.server_sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)# BluetoothSocket(RFCOMM)
-        self.server_sock.bind((self.host, self.port))
-        self.server_sock.listen(1) # Only accept 1 connection at 1 time
-
+        
+        while True : # Keep trying until bind is OK.
+            try: 
+                self.server_sock.bind((self.host, self.port))
+            except Exception as e : 
+                self.logger.warning("[XBEE] Exception at sock bind() : " + str(e))
+            else: 
+                break 
+        self.server_sock.listen(1) # Only accept 1 connection at a time
         self.is_engine_running = True 
         self.engine_thread = threading.Thread(target = self.server_engine)
         self.engine_thread.start()
