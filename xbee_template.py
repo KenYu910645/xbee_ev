@@ -6,7 +6,7 @@ import threading
 import logging 
 import socket, errno
 import os 
-from global_var.global_param import  WAIT_AWK_MAX_TIME, MAX_RESEND_TIMES, KEEPALIVE, KEPPALIVE_MAX, IS_PRINT_OUT_PING_PONG
+from global_var.global_param import  WAIT_AWK_MAX_TIME, MAX_RESEND_TIMES, KEEPALIVE, KEPPALIVE_MAX, IS_PRINT_OUT_PING_PONG, SERVER_SOCKET_TIMEOUT, SOCKET_TIMEOUT
 
 START_CHAR = '['
 END_CHAR = ']'
@@ -140,7 +140,8 @@ class BLUE_COM(object):
     
     def server_engine (self): # ToTally Blocking 
         global recbufList
-        self.server_sock.settimeout(5)
+        self.server_sock.settimeout(SERVER_SOCKET_TIMEOUT)
+        finally_conneted = True # This flag is only for logging. 
         #try:
         if True : 
             while self.is_engine_running: # Durable Server
@@ -167,6 +168,9 @@ class BLUE_COM(object):
                     try: 
                         client_sock, client_info = self.server_sock.accept()
                     except socket.error, e:
+                        if finally_conneted : 
+                            self.logger.info('[XBEE] Waiting Connection .... ') 
+                            finally_conneted = False 
                         if e.args[0] == errno.EWOULDBLOCK or e.args[0] == 'timed out':
                             self.logger.debug('[XBEE] Still waiting for client.')
                         else: 
@@ -174,6 +178,7 @@ class BLUE_COM(object):
                     else: 
                         self.sock = client_sock
                         self.logger.info("[XBEE] Accepted connection from "+  str(client_info))
+                        finally_conneted = True 
                         self.is_connect = True 
                         self.keepAlive_count = time.time() 
                         
@@ -228,10 +233,9 @@ class BLUE_COM(object):
         ts = time.time()
         # Create the client socket
         self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.sock.setblocking(False) # Non-blocking 
-        # self.sock.settimeout(10) # Timeout 10 sec  # TODO This will cause the bug 
+        self.sock.settimeout(SOCKET_TIMEOUT) # TODO TODO TODO test 
     
-        rc = self.sock.connect_ex((self.host, self.port))
+        rc = self.sock.connect_ex((self.host, self.port)) # Blocking 
         if rc == 0 :  # Conncetion success
             output  = True 
             self.is_connect = True 
@@ -325,7 +329,7 @@ class BLUE_COM(object):
         Both Server and Client need recv_engine for receiving any message.
         '''
         global recbufList, recAwkDir
-        self.sock.settimeout(1)
+        self.sock.settimeout(SOCKET_TIMEOUT)
         while self.is_connect:
             #---------RECV -----------# 
             try: 
@@ -377,7 +381,6 @@ class BLUE_COM(object):
                         self.keepAlive_count = time.time()
                         self.logger.info('[XBEE] Get PONG in ' + str( round((self.keepAlive_count - self.ping_count) * 1000 )) + "ms.")
                     else:
-                        # self.logger.debug("[XBEE] Sending AWK")
                         self.send('AWK', 0, mid = mid_str[4:])
                         if rec == "DISCONNECT":
                             recbufList.append([mid_str[4:], rec , ""])

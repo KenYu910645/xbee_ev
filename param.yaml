@@ -1,5 +1,7 @@
 WAIT_AWK_MAX_TIME : 3 # sec 
 MAX_RESEND_TIMES : 6 # times 
 KEEPALIVE : 2 # sec ping,pong every 2 sec , 
-KEPPALIVE_MAX : 4 # How long would you wait for PING,PONG, before abandon socket
+KEPPALIVE_MAX : 4 # SEc, How long would you wait for PING,PONG, before abandon socket
+SOCKET_TIMEOUT : 1 # Sec 
+SERVER_SOCKET_TIMEOUT : 5 # Sec  
 IS_PRINT_OUT_PING_PONG : False # 
