@@ -6,7 +6,7 @@ import threading
 import logging 
 import socket, errno
 import os 
-from global_var.global_param import  WAIT_AWK_MAX_TIME, MAX_RESEND_TIMES, KEEPALIVE, KEPPALIVE_MAX
+from global_var.global_param import  WAIT_AWK_MAX_TIME, MAX_RESEND_TIMES, KEEPALIVE, KEPPALIVE_MAX, IS_PRINT_OUT_PING_PONG
 
 START_CHAR = '['
 END_CHAR = ']'
@@ -40,7 +40,10 @@ class SEND_AGENT(object):
                 self.bl_obj.logger.info("[XBEE] Lost connection, Give up sending " + self.payload)
                 return 
             try: 
-                self.bl_obj.logger.info("[XBEE] Sending " + self.payload + "(" + self.mid + ")")
+                if (not IS_PRINT_OUT_PING_PONG) and (self.payload == 'PING' or self.payload == 'PONG' ):
+                    pass 
+                else:  
+                    self.bl_obj.logger.info("[XBEE] Sending " + self.payload + "(" + self.mid + ")")
                 self.bl_obj.sock.sendall( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e : 
                 self.bl_obj.logger.error("[XBEE] XBEE Error: " + str(e) )
@@ -65,7 +68,10 @@ class SEND_AGENT(object):
                 return 
             #------ Send message -------#  # TODO 
             try: 
-                self.bl_obj.logger.info("[XBEE] Sending: " + self.payload + "(" + self.mid + ")") # totally non-blocking even if disconnect
+                if (not IS_PRINT_OUT_PING_PONG) and (self.payload == 'PING' or self.payload == 'PONG' ):
+                    pass 
+                else:  
+                    self.bl_obj.logger.info("[XBEE] Sending " + self.payload + "(" + self.mid + ")")
                 self.bl_obj.sock.sendall( '['+self.payload+',mid'+ self.mid+']')
             except Exception as e :
                 self.bl_obj.logger.error("[XBEE] BluetoothError: " + str(e) )
@@ -357,7 +363,7 @@ class BLUE_COM(object):
 
                 if is_valid:
                     #------- Print  ----------#  
-                    if rec == 'PING' or rec == 'PONG' :
+                    if (not IS_PRINT_OUT_PING_PONG) and (rec == 'PING' or rec == 'PONG' ):
                         pass 
                     else:  
                         self.logger.info ("[XBEE] Received: " + rec )
