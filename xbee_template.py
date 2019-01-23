@@ -211,7 +211,7 @@ class BLUE_COM(object):
         self.engine_thread.start()
     
     def client_engine_stop(self):
-        self.client_disconnect_qos1() # Block for 3 sec to send DISCONNECT to server . 
+        self.client_disconnect() # Qos0 
         self.shutdown_threads()
         self.logger.info("[XBEE] client engine stop ")
 
@@ -261,14 +261,9 @@ class BLUE_COM(object):
             output = False 
         return output 
 
-    def client_disconnect_qos1(self): # Normally disconnect  # Only from client -> server 
+    def client_disconnect(self): # Normally disconnect  # Only from client -> server 
         if self.is_connect: 
-            rc = self.send("DISCONNECT", 1)
-            t_s = time.time() 
-            while not rc.is_awk:
-                if time.time() - t_s  > 3 : # Only wait 3 sec
-                    self.logger.warning ("[XBEE] Fail to send DISCONNECT in 3 sec.") 
-                    break
+            self.send("DISCONNECT", 0)
         else: 
             self.logger.warning ("[XBEE] No need for disconnect, Connection already lost.")
     
